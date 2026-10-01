@@ -21,9 +21,10 @@ WEBSITE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "we
 app = Flask(__name__)
 CORS(app)  # benarkan website BrownSkin panggil /predict walaupun origin lain
  
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Load model
-model = joblib.load("knn_model.pkl")
-scaler = joblib.load("scaler.pkl")
+model = joblib.load(os.path.join(BASE_DIR, "knn_model.pkl"))
+scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
 
 
 @app.route("/")

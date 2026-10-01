@@ -7,23 +7,29 @@ import os
 
 import mysql.connector
 
-# Tetapan sambungan. Nilai lalai = tetapan XAMPP asal korang.
-# Kalau MySQL korang lain, tukar terus kat sini ATAU set environment
-# variable (BROWNSKIN_DB_HOST / _USER / _PASSWORD / _NAME) tanpa edit code.
-DB_CONFIG = {
-    "host": os.environ.get("BROWNSKIN_DB_HOST", "localhost"),
-    "port": int(os.environ.get("BROWNSKIN_DB_PORT", 3307)),
-    "user": os.environ.get("BROWNSKIN_DB_USER", "root"),
-    "password": os.environ.get("BROWNSKIN_DB_PASSWORD", ""),  # password MySQL root (XAMPP biasa kosong "")
-    "database": os.environ.get("BROWNSKIN_DB_NAME", "undertone detection"),  # nama ada SPACE, jangan tukar
-}
+def get_db_config():
+    cfg = {
+        "host": os.environ.get("BROWNSKIN_DB_HOST", "localhost"),
+        "port": int(os.environ.get("BROWNSKIN_DB_PORT", 3307)),
+        "user": os.environ.get("BROWNSKIN_DB_USER", "root"),
+        "password": os.environ.get("BROWNSKIN_DB_PASSWORD", ""),
+        "database": os.environ.get("BROWNSKIN_DB_NAME", "brownskin"),
+    }
+    # Jika bersambung ke TiDB Cloud atau mana-mana cloud database
+    if "tidbcloud.com" in cfg["host"] or os.environ.get("BROWNSKIN_DB_SSL", "").lower() in ("true", "1"):
+        cfg["ssl_disabled"] = False
+    return cfg
+
+
+def get_connection():
+    return mysql.connector.connect(**get_db_config())
 
 
 def check_connection():
     """Semak sambungan DB + bilangan baris. Return (ok: bool, mesej: str).
     Dipanggil bila server start supaya masalah DB nampak awal."""
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = get_connection()
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM foundation")
         n_f = cur.fetchone()[0]
@@ -33,7 +39,7 @@ def check_connection():
         conn.close()
         return True, f"MySQL OK  (foundation: {n_f} baris, lipstick: {n_l} baris)"
     except mysql.connector.Error as err:
-        return False, f"MySQL GAGAL: {err}  -> jalankan 'python setup_database.py'"
+        return False, f"MySQL GAGAL: {err}  -> semak tetapan DB atau jalankan setup"
 
 
 # Urutan skintone dari paling cerah -> paling gelap.
@@ -54,7 +60,7 @@ def get_recommendations(undertone, skintone):
     undertone tu, atau connection gagal.
     """
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
         # 1) Cuba match tepat: undertone + skintone
@@ -107,7 +113,7 @@ def get_lipstick_recommendations(undertone, skintone):
     Return SATU cadangan sahaja: [{"shade": "...", "skintone": "...", "undertone": "..."}]
     """
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
         # Cari match tepat
