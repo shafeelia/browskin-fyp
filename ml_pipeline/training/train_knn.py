@@ -7,8 +7,16 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 
+import os
+
+TRAIN_DIR = os.path.dirname(os.path.abspath(__file__))
+ML_DIR = os.path.dirname(TRAIN_DIR)
+CSV_PATH = os.path.join(ML_DIR, "data", "undertone_features.csv")
+if not os.path.exists(CSV_PATH):
+    CSV_PATH = "undertone_features.csv"
+
 # Load extracted features
-df = pd.read_csv("undertone_features.csv")
+df = pd.read_csv(CSV_PATH)
 
 # Features: guna normalized chromaticity (rn, gn, bn) sahaja.
 #
@@ -111,9 +119,15 @@ X_all_scaled = final_scaler.fit_transform(X)
 final_model = KNeighborsClassifier(n_neighbors=best_k, weights="uniform")
 final_model.fit(X_all_scaled, y)
 
-# Save model
+# Save model to backend models folder and local
+PROJECT_ROOT = os.path.dirname(ML_DIR)
+BACKEND_MODEL_DIR = os.path.join(PROJECT_ROOT, "backend", "models", "saved_models")
+os.makedirs(BACKEND_MODEL_DIR, exist_ok=True)
+
+joblib.dump(final_model, os.path.join(BACKEND_MODEL_DIR, "knn_model.pkl"))
+joblib.dump(final_scaler, os.path.join(BACKEND_MODEL_DIR, "scaler.pkl"))
 joblib.dump(final_model, "knn_model.pkl")
 joblib.dump(final_scaler, "scaler.pkl")
 
-print("\n[OK] KNN model saved as knn_model.pkl (k =", best_k, ", features = rn/gn/bn)")
-print("[OK] Scaler saved as scaler.pkl")
+print("\n[OK] KNN model saved to:", os.path.join(BACKEND_MODEL_DIR, "knn_model.pkl"))
+print("[OK] Scaler saved to:", os.path.join(BACKEND_MODEL_DIR, "scaler.pkl"))

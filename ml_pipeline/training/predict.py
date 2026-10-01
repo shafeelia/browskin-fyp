@@ -3,13 +3,29 @@ import joblib
 import os
 import pandas as pd
 
-from undertone_utils import extract_features
+import sys
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ML_DIR = os.path.dirname(CURRENT_DIR)
+sys.path.append(os.path.join(ML_DIR, "utils"))
+
+try:
+    from undertone_utils import extract_features
+except ImportError:
+    from utils.undertone_utils import extract_features
 
 # Load model
-model = joblib.load("knn_model.pkl")
-scaler = joblib.load("scaler.pkl")
+model_path = os.path.join(ML_DIR, "..", "backend", "models", "saved_models", "knn_model.pkl")
+scaler_path = os.path.join(ML_DIR, "..", "backend", "models", "saved_models", "scaler.pkl")
+if not os.path.exists(model_path):
+    model_path = "knn_model.pkl"
+    scaler_path = "scaler.pkl"
 
-test_folder = "test_images"
+model = joblib.load(model_path)
+scaler = joblib.load(scaler_path)
+
+test_folder = os.path.join(ML_DIR, "test_images")
+if not os.path.exists(test_folder):
+    test_folder = "test_images"
 
 print("===================================")
 print("TESTING MULTIPLE IMAGES")
@@ -47,7 +63,7 @@ for filename in os.listdir(test_folder):
     print("RGB:", feat["R"], feat["G"], feat["B"])
     print("HSV:", feat["H"], feat["S"], feat["V"])
     print("Method:", feat["method"])
-    print("✅ Prediction:", prediction)
+    print("[OK] Prediction:", prediction)
 
 print("\n===================================")
 print("TEST COMPLETE")

@@ -9,7 +9,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 
-df = pd.read_csv("undertone_features.csv")
+import os
+
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "undertone_features.csv")
+if not os.path.exists(CSV_PATH):
+    CSV_PATH = "undertone_features.csv"
+
+df = pd.read_csv(CSV_PATH)
 X = df[["R", "G", "B", "H", "S", "V"]]
 y = df["undertone"]
 

@@ -12,12 +12,15 @@ import os
 import re
 import sys
 
-import mysql.connector
+DB_CONFIG = {
+    "host": os.environ.get("BROWNSKIN_DB_HOST", "localhost"),
+    "port": int(os.environ.get("BROWNSKIN_DB_PORT", 3307)),
+    "user": os.environ.get("BROWNSKIN_DB_USER", "root"),
+    "password": os.environ.get("BROWNSKIN_DB_PASSWORD", ""),
+    "database": os.environ.get("BROWNSKIN_DB_NAME", "brownskin"),
+}
 
-from db_utils import DB_CONFIG
-
-SQL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "..", "database", "undertone_detection.sql")
+SQL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "undertone_detection.sql")
 
 
 def load_statements(path):

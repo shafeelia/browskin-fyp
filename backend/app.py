@@ -1,125 +1,82 @@
-import os
+"""
+Aplikasi Utama BrownSkin (MVC Architecture Entry Point).
+Menguruskan laluan web (routes), inisialisasi Flask, dan memuatkan model AI.
+"""
 
-from flask import Flask, request, jsonify, send_file, send_from_directory
+import os
 import joblib
-import cv2
-import numpy as np
-import pandas as pd
+from flask import Flask, send_file, send_from_directory, request
 from flask_cors import CORS
 
-from undertone_utils import extract_features
-from db_utils import get_recommendations, get_lipstick_recommendations, check_connection
-
-# Folder "website" (HTML/CSS/JS/gambar) ada SEBELAH folder "backend".
-# Flask serve terus dari sini supaya HANYA SATU server (satu URL/IP)
-# perlu dibuka -- ini penting utk boleh buka dari fon: fon dan laptop
-# kena guna URL/origin yang SAMA supaya fetch("/predict") dari
-# script.js automatik sampai ke server yang betul (rujuk SERVER_URL
-# dalam website/script.js).
-WEBSITE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "website")
+from config import WEBSITE_DIR, KNN_MODEL_PATH, SCALER_PATH
+from models.db_models import check_connection
+from controllers.predict_controller import handle_predict_request
 
 app = Flask(__name__)
-CORS(app)  # benarkan website BrownSkin panggil /predict walaupun origin lain
- 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Load model
-model = joblib.load(os.path.join(BASE_DIR, "knn_model.pkl"))
-scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
+CORS(app)
+
+# ========================================================
+# [M - MODEL] Muat model Machine Learning & Scaler
+# ========================================================
+model = joblib.load(KNN_MODEL_PATH)
+scaler = joblib.load(SCALER_PATH)
 
 
+# ========================================================
+# [V - VIEW] Laluan Paparan Antara Muka Pengguna (Frontend)
+# ========================================================
 @app.route("/")
 def home():
-    # Buka terus halaman utama website sebenar (home.html), bukan
-    # index.html (tu hanya alat ujian ringkas backend).
+    """Menyajikan halaman utama BrownSkin."""
     return send_from_directory(WEBSITE_DIR, "home.html")
 
 
 @app.route("/test-upload")
 def test_upload_page():
-    # Halaman ujian ringkas (upload terus, tanpa styling) -- berguna
-    # untuk debug backend secara berasingan drpd website sebenar.
-    return send_file("index.html")
+    """Halaman ujian ringkas untuk semakan diagnosis API."""
+    test_page = os.path.join(WEBSITE_DIR, "test_upload.html")
+    if os.path.exists(test_page):
+        return send_file(test_page)
+    return send_file(os.path.join(os.path.dirname(__file__), "index.html"))
 
 
 @app.route("/<path:filename>")
 def website_files(filename):
-    # Serve semua fail lain dalam folder website (html/css/js/png...)
-    # supaya link macam "about.html", "style.css", "logo.png" berfungsi.
+    """Menyajikan aset statik (CSS, JS, Imej) dari folder website dengan sokongan sub-folder automatik."""
+    # 1. Semak laluan tepat dalam website/
+    direct_path = os.path.join(WEBSITE_DIR, filename)
+    if os.path.exists(direct_path) and os.path.isfile(direct_path):
+        return send_from_directory(WEBSITE_DIR, filename)
+
+    # 2. Semak dalam sub-folder tersusun (fallback automatik)
+    subfolders = [
+        "images",
+        "images/banners",
+        "images/products",
+        "images/shades",
+        "css",
+        "js",
+        "pages"
+    ]
+    for sub in subfolders:
+        candidate = os.path.join(WEBSITE_DIR, sub, filename)
+        if os.path.exists(candidate) and os.path.isfile(candidate):
+            return send_from_directory(os.path.join(WEBSITE_DIR, sub), filename)
+
     return send_from_directory(WEBSITE_DIR, filename)
- 
- 
+
+
+# ========================================================
+# [C - CONTROLLER] Laluan API Pengesanan & Cadangan
+# ========================================================
 @app.route("/predict", methods=["POST"])
 def predict():
- 
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"})
- 
-    file = request.files["image"]
- 
-    # Read uploaded image
-    file_bytes = np.frombuffer(file.read(), np.uint8)
-    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
- 
-    if image is None:
-        return jsonify({"error": "Cannot read image"})
- 
-    feat = extract_features(image)
- 
-    if feat is None:
-        return jsonify({
-            "error": "Tak dapat kesan muka/pipi dengan jelas. Sila muat naik gambar muka yang menghadap kamera, pencahayaan cukup terang."
-        })
- 
-    # =========================
-    # Scale (guna DataFrame supaya column names sepadan dgn masa training,
-    # buang warning "X does not have valid feature names")
-    # =========================
- 
-    features_df = pd.DataFrame(
-        [[feat["rn"], feat["gn"], feat["bn"]]],
-        columns=["rn", "gn", "bn"]
-    )
- 
-    features_scaled = scaler.transform(features_df)
- 
-    # =========================
-    # Prediction
-    # =========================
- 
-    prediction = model.predict(features_scaled)[0]
+    """Mengendalikan permintaan pengesanan muka melalui Predict Controller."""
+    return handle_predict_request(request, model, scaler)
 
-    # Confidence: peratus jiran (k-nearest neighbours) yang bersetuju
-    # dengan prediction ni. Bukan "accuracy" model, tapi keyakinan
-    # untuk gambar SPESIFIK ni sahaja.
-    probabilities = model.predict_proba(features_scaled)[0]
-    confidence = round(float(max(probabilities)) * 100, 1)
 
-    # =========================
-    # Foundation Recommendation
-    # =========================
- 
-    recommendations = get_recommendations(str(prediction), feat["skintone"])
-    lipstick_recommendations = get_lipstick_recommendations(str(prediction), feat["skintone"])
- 
-    return jsonify({
-        "R": feat["R"],
-        "G": feat["G"],
-        "B": feat["B"],
-        "H": feat["H"],
-        "S": feat["S"],
-        "V": feat["V"],
-        "undertone": str(prediction),
-        "skintone": feat["skintone"],
-        "confidence": confidence,
-        "detection_method": feat["method"],
-        "recommendations": recommendations,
-        "lipstick_recommendations": lipstick_recommendations
-    })
- 
- 
 def _print_lan_url():
-    """Bantu dapatkan IP laptop dalam WiFi/LAN yang sama, supaya senang
-    tahu alamat mana nak taip dalam browser fon."""
+    """Membantu memaparkan alamat IP tempatan untuk ujian WiFi/telefon."""
     import socket
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -128,16 +85,18 @@ def _print_lan_url():
         s.close()
     except Exception:
         ip = "127.0.0.1"
+
+    port = int(os.environ.get("PORT", 5000))
     print("\n===================================")
-    print("BrownSkin server sedang berjalan")
+    print("✨ BrownSkin MVC Server Berjalan ✨")
     print("===================================")
-    print(f"  Di laptop ni      : http://127.0.0.1:5000")
-    print(f"  Dari fon (WiFi sama): http://{ip}:5000")
-    print("Pastikan fon dan laptop sambung WiFi yang SAMA.")
-    print("  Database          :", check_connection()[1])
+    print(f"  Laptop (Tempatan) : http://127.0.0.1:{port}")
+    print(f"  Telefon (WiFi)    : http://{ip}:{port}")
+    print("  Status Pangkalan Data:", check_connection()[1])
     print("===================================\n")
 
 
 if __name__ == "__main__":
     _print_lan_url()
-    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True, threaded=True)

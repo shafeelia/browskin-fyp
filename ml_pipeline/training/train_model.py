@@ -1,11 +1,21 @@
 import os
+import sys
 import pandas as pd
 import cv2
 
-from undertone_utils import extract_features
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ML_DIR = os.path.dirname(CURRENT_DIR)
+sys.path.append(os.path.join(ML_DIR, "utils"))
+
+try:
+    from undertone_utils import extract_features
+except ImportError:
+    from utils.undertone_utils import extract_features
 
 # Lokasi dataset
-base_path = "dataset"
+base_path = os.path.join(ML_DIR, "dataset")
+if not os.path.exists(base_path):
+    base_path = "dataset"
 
 categories = ["cool", "neutral", "olive", "warm"]
 
@@ -86,6 +96,9 @@ if skipped:
         print(f"   - {fn}: {reason}")
 
 # Save extracted data (buang column 'method' sebelum save, sebab train_knn.py tak perlukan)
+output_csv = os.path.join(ML_DIR, "data", "undertone_features.csv")
+os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+df.drop(columns=["method"]).to_csv(output_csv, index=False)
 df.drop(columns=["method"]).to_csv("undertone_features.csv", index=False)
 
-print("\n✅ Features saved as undertone_features.csv")
+print(f"\n✅ Features saved to: {output_csv}")

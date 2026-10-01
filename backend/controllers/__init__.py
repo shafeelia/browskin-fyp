@@ -1,0 +1,1 @@
+from .predict_controller import handle_predict_request
