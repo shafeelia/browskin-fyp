@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undertone AI Checker</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input[type="file"] { margin: 15px 0; }
+        button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #45a049; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
+        .success { background-color: #e8f5e9; border: 1px solid #c8e6c9; }
+        .error { background-color: #ffebee; border: 1px solid #ffcdd2; color: #c62828; }
+        h2 { color: #2e7d32; }
+    </style>
+</head>
+<body>
+
+    <h2>🎨 Undertone AI Checker</h2>
+    <p>Muat naik gambar muka untuk semak undertone anda:</p>
+
+    <input type="file" id="imageInput" accept="image/*"><br>
+    <button onclick="uploadImage()">Analisis Undertone</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const resultDiv = document.getElementById('result');
+
+            if (fileInput.files.length === 0) {
+                alert("Sila pilih gambar terlebih dahulu!");
+                return;
+            }
+
+            resultDiv.style.display = "block";
+            resultDiv.className = "";
+            resultDiv.innerHTML = "⏳ Sedang menganalisis gambar...";
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            try {
+                // Panggil API Flask
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = "success";
+
+                    let recHtml = "";
+                    if (data.recommendations && data.recommendations.length > 0) {
+                        recHtml = "<h4>💄 Cadangan Foundation:</h4><ul style='text-align:left; display:inline-block;'>";
+                        data.recommendations.forEach(item => {
+                            recHtml += `<li><b>${item.shade}</b> (${item.skintone})</li>`;
+                        });
+                        recHtml += "</ul>";
+                    } else {
+                        recHtml = "<p><i>Tiada cadangan foundation dijumpai untuk undertone ini.</i></p>";
+                    }
+
+                    let lipHtml = "";
+                    if (data.lipstick_recommendations && data.lipstick_recommendations.length > 0) {
+                        lipHtml = "<h4>💋 Cadangan Lipstick:</h4><ul style='text-align:left; display:inline-block;'>";
+                        data.lipstick_recommendations.forEach(item => {
+                            lipHtml += `<li><b>${item.shade}</b> (${item.skintone})</li>`;
+                        });
+                        lipHtml += "</ul>";
+                    } else {
+                        lipHtml = "<p><i>Tiada cadangan lipstick dijumpai untuk undertone ini.</i></p>";
+                    }
+
+                    resultDiv.innerHTML = `
+                        <h3>Keputusan: <b>${data.undertone.toUpperCase()}</b></h3>
+                        <p>Skintone dikesan: <b>${data.skintone}</b></p>
+                        <hr>
+                        ${recHtml}
+                        <hr>
+                        ${lipHtml}
+                    `;
+                } else {
+                    resultDiv.className = "error";
+                    resultDiv.innerHTML = `❌ Error: ${data.error || 'Gagal memproses gambar'}`;
+                }
+            } catch (err) {
+                resultDiv.className = "error";
+                resultDiv.innerHTML = "❌ Gagal berhubung dengan backend Flask. Pastikan `python app.py` sedang berjalan!";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
