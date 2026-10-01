@@ -1,147 +1,218 @@
-# 🚀 Panduan Lengkap Deployment Sistem BrownSkin FYP
+# Cloud Deployment and System Architecture Guide: BrownSkin FYP
 
-Dokumentasi ini menerangkan seni bina awan (*cloud architecture*), langkah-langkah *deployment*, konfigurasi pembolehubah persekitaran (*environment variables*), dan strategi pemantauan untuk sistem **BrownSkin** (Sistem Pengesanan Undertone & Cadangan Kosmetik Berasaskan AI).
+This document outlines the cloud infrastructure, deployment procedures, environment variable configurations, and monitoring strategies for the **BrownSkin** system (AI-Powered Undertone Detection and Cosmetic Recommendation System).
 
 ---
 
-## 1. Seni Bina Sistem (Architecture Overview)
+## 1. System Architecture Overview
 
-Sistem BrownSkin menggunakan seni bina moden tanpa kos (100% Free-tier Cloud Architecture) yang bersedia untuk kegunaan produksi dan pembentangan Projek Tahun Akhir (FYP):
+The BrownSkin system utilizes a zero-cost, production-ready cloud architecture (100% Free-Tier) optimized for low latency, secure data handling, and high availability:
 
 ```
                       +-----------------------------+
-                      |   Pengguna (Telefon / PC)   |
+                      |   Client (Mobile / Desktop) |
                       +--------------+--------------+
                                      |
-                               HTTPS | (Kamera / Muat Naik Gambar)
+                               HTTPS | (Camera Stream / Image Upload)
                                      v
                       +-----------------------------+
                       |   Render.com (Web Service)  |
-                      |  - Frontend: HTML/CSS/JS    |
+                      |  - Frontend: HTML5/CSS3/JS  |
                       |  - Backend: Flask + Gunicorn|
-                      |  - ML: OpenCV + Scikit-Learn|
+                      |  - ML Engine: OpenCV + k-NN |
                       +--------------+--------------+
                                      |
-                          MySQL+TLS  | Port 4000 (Query Shade & Gincu)
+                           MySQL+TLS | Port 4000 (Query Shade & Lipstick)
                                      v
                       +-----------------------------+
                       |    TiDB Cloud Serverless    |
                       |    (AWS Singapore Region)   |
-                      | - Jadual: foundation (26)   |
-                      | - Jadual: lipstick (21)     |
+                      | - Table: foundation (26)    |
+                      | - Table: lipstick (21)      |
                       +-----------------------------+
                                      ^
-                                     | HTTP Ping (Setiap 5 minit)
+                                     | HTTP Ping (Every 5 minutes)
                       +--------------+--------------+
                       |         UptimeRobot         |
-                      |    (Elak Server "Tidur")    |
+                      |    (Prevents Cold Start)    |
                       +-----------------------------+
 ```
 
-### Komponen Utama:
-1. **Frontend**: Antaramuka web responsif (HTML5, Vanilla CSS, JS) yang menyokong kamera hadapan telefon pintar dan muat naik gambar.
-2. **Backend**: Python Flask menggunakan pelayan produksi **Gunicorn**.
-3. **Model AI**: 
-   - **OpenCV (Haar Cascade)**: Mengecam kedudukan muka dan memotong zon pipi kiri & kanan secara automatik.
-   - **Scikit-Learn (k-NN)**: Mengklasifikasikan undertone (*cool, neutral, warm, olive*) dan mengira skor keyakinan (*confidence rate*).
-4. **Pangkalan Data (Database)**: **TiDB Cloud (Serverless MySQL)** berpusat di AWS Singapore dengan penyulitan TLS/SSL.
-5. **Keep-Alive Monitor**: **UptimeRobot** menghantar isyarat `HTTP GET` setiap 5 minit untuk memastikan servis Render sentiasa aktif tanpa henti.
+### Core Architecture Layers:
+
+1. **Presentation Layer (View / Frontend)**:
+   - Responsive web interface built with standard HTML5, CSS3, and JavaScript.
+   - Supports mobile front-facing camera streaming via HTML5 `MediaDevices.getUserMedia()` and manual file uploads.
+
+2. **Application Layer (Controller & Server)**:
+   - Python 3.12 Flask framework managed by the **Gunicorn WSGI** production server.
+   - Modular MVC structure separating route controllers (`predict_controller.py`) from database models (`db_models.py`).
+
+3. **Machine Learning Pipeline (Model)**:
+   - **OpenCV (Haar Cascade)**: Automatically locates facial bounds and isolates cheek regions (left and right) to minimize background noise.
+   - **Normalized Chromaticity Extraction**: Computes normalized $r, g, b$ color ratios to insulate predictions from varying ambient lighting conditions.
+   - **Scikit-Learn (k-Nearest Neighbors & StandardScaler)**: Classifies user undertones into *cool, neutral, warm, or olive* categories and computes sample-specific confidence ratings.
+
+4. **Persistence Layer (Database Model)**:
+   - **TiDB Cloud Serverless (MySQL Compatible)** hosted in AWS Singapore (`ap-southeast-1`).
+   - Secure TLS/SSL encrypted connection on port 4000.
+   - Contains cosmetic shade tables (`foundation` with 26 records, `lipstick` with 21 records).
+
+5. **High Availability Monitoring**:
+   - **UptimeRobot** issues an HTTP GET ping every 5 minutes to prevent Render free-tier instances from entering idle sleep mode.
 
 ---
 
-## 2. Langkah Demi Langkah Deployment
+## 2. Step-by-Step Deployment Procedure
 
-### Bahagian A: Pangkalan Data Awan (TiDB Cloud)
-1. Buka [tidbcloud.com](https://tidbcloud.com) dan log masuk.
-2. Cipta kluster baharu:
-   - **Plan:** *Starter ($0/month, Free)*.
-   - **Instance Name:** `brownskin-db`.
-   - **Region:** *AWS Singapore (`ap-southeast-1`)*.
-3. Dapatkan maklumat sambungan dari butang **Connect**:
-   - **Host:** `gateway01.ap-southeast-1.prod.aws.tidbcloud.com`
-   - **Port:** `4000`
-   - **User:** `2cPx11MtXzY5S1d.root`
-   - **Password:** *(Kata laluan yang dijana)*
-4. Skrip pangkalan data (`undertone_detection.sql`) telah dimigrasikan ke dalam pangkalan data bernama `brownskin` yang mengandungi:
-   - Jadual `foundation` (26 rekod padanan tona).
-   - Jadual `lipstick` (21 rekod padanan gincu).
+### Part A: Cloud Database Setup (TiDB Cloud)
+
+1. Sign in to [tidbcloud.com](https://tidbcloud.com).
+2. Create a serverless cluster:
+   - **Plan**: Starter ($0/month, Free).
+   - **Cluster / Instance Name**: `brownskin-db`.
+   - **Region**: AWS Singapore (`ap-southeast-1`).
+3. Retrieve connection parameters via the **Connect** modal:
+   - **Host**: `gateway01.ap-southeast-1.prod.aws.tidbcloud.com`
+   - **Port**: `4000`
+   - **User**: `2cPx11MtXzY5S1d.root`
+   - **Password**: *(Generated authentication secret)*
+4. The database schema from `database/undertone_detection.sql` is migrated to the `brownskin` database, containing:
+   - Table `foundation`: maps undertone and skintone combinations to foundation product names.
+   - Table `lipstick`: maps undertone and skintone combinations to lipstick product names.
 
 ---
 
-### Bahagian B: Hos Web & API (Render.com)
-1. Buka [dashboard.render.com](https://dashboard.render.com) dan log masuk dengan GitHub.
-2. Tekan butang **New +** ➡️ **Web Service**.
-3. Pilih repository GitHub: `shafeelia/browskin-fyp`.
-4. Masukkan konfigurasi berikut:
-   - **Name:** `browskin-fyp`
-   - **Language:** `Python 3`
-   - **Branch:** `main`
-   - **Region:** `Singapore (Southeast Asia)` (atau `Oregon (US West)`)
-   - **Root Directory:** *(Biarkan kosong)*
-   - **Build Command:**
+### Part B: Web Service Hosting (Render.com)
+
+1. Sign in to [dashboard.render.com](https://dashboard.render.com) using GitHub.
+2. Select **New +** > **Web Service**.
+3. Link the repository: `shafeelia/browskin-fyp`.
+4. Configure service specifications:
+   - **Name**: `browskin-fyp`
+   - **Language**: `Python 3`
+   - **Branch**: `main`
+   - **Region**: `Singapore (Southeast Asia)` (or `Oregon (US West)`)
+   - **Root Directory**: *(Leave blank)*
+   - **Build Command**:
      ```bash
      pip install -r backend/requirements.txt
      ```
-   - **Start Command:**
+   - **Start Command**:
      ```bash
      cd backend && gunicorn -b 0.0.0.0:$PORT app:app
      ```
-   - **Instance Type:** Pilih **Free ($0/month)**.
+   - **Instance Type**: Select **Free ($0/month)**.
 
-5. Tambah **Environment Variables** berikut di bahagian tetapan:
-   | Key | Value | Catatan |
-   | :--- | :--- | :--- |
-   | `BROWNSKIN_DB_HOST` | `gateway01.ap-southeast-1.prod.aws.tidbcloud.com` | Host TiDB Cloud |
-   | `BROWNSKIN_DB_PORT` | `4000` | Port TiDB |
-   | `BROWNSKIN_DB_USER` | `2cPx11MtXzY5S1d.root` | Username TiDB |
-   | `BROWNSKIN_DB_PASSWORD` | `EmwXfDbPFc1vK8WL` | Password database |
-   | `BROWNSKIN_DB_NAME` | `brownskin` | Nama database |
-   | `PYTHON_VERSION` | `3.12.0` | Versi Python |
+5. Configure **Environment Variables** in the service dashboard:
 
-6. Tekan butang **"Deploy web service"**.
-7. Selepas proses binaan selesai, status akan bertukar menjadi **"Live"** dengan URL rasmi:
-   👉 **`https://browskin-fyp.onrender.com`**
+| Variable Key | Assigned Value | Description |
+| :--- | :--- | :--- |
+| `BROWNSKIN_DB_HOST` | `gateway01.ap-southeast-1.prod.aws.tidbcloud.com` | TiDB Cloud Gateway Host |
+| `BROWNSKIN_DB_PORT` | `4000` | TiDB Public Port |
+| `BROWNSKIN_DB_USER` | `2cPx11MtXzY5S1d.root` | TiDB Authentication Username |
+| `BROWNSKIN_DB_PASSWORD` | `EmwXfDbPFc1vK8WL` | TiDB Authentication Password |
+| `BROWNSKIN_DB_NAME` | `brownskin` | Target Database Name |
+| `PYTHON_VERSION` | `3.12.0` | Python Runtime Version |
 
----
-
-### Bahagian C: Memastikan Servis Sentiasa Aktif (UptimeRobot)
-Pelayan percuma Render akan tidur (*spin-down*) secara automatik sekiranya tiada trafik melebihi 15 minit. UptimeRobot digunakan untuk menyelesaikan isu ini:
-
-1. Daftar akaun percuma di [uptimerobot.com](https://uptimerobot.com).
-2. Tekan **"+ Add New Monitor"**.
-3. Tetapkan parameter berikut:
-   - **Monitor Type:** `HTTP(s)`
-   - **Friendly Name:** `BrownSkin Web Service`
-   - **URL (or IP):** `https://browskin-fyp.onrender.com`
-   - **Monitoring Interval:** `Every 5 minutes`
-   - **Monitor Timeout:** `30 seconds`
-4. Tekan **"Create Monitor"**.
-5. Sistem kini akan aktif 24 jam sehari tanpa berlaku *cold start* yang lama.
+6. Click **Deploy Web Service**.
+7. Once the build completes, the application URL will be live at:
+   `https://browskin-fyp.onrender.com`
 
 ---
 
-## 3. Privasi Data & Pengendalian Imej (Security & Privacy)
+### Part C: Service Availability Monitoring (UptimeRobot)
 
-Sistem ini direka khas mengikut amalan terbaik perlindungan privasi data:
-- **Tiada Storan Imej Kekal**: Gambar muka pengguna yang dimuat naik atau ditangkap melalui kamera telefon **TIDAK DISIMPAN** ke dalam cakera keras (*hard drive*) pelayan mahupun pangkalan data.
-- **Pemprosesan Dalam Memori Sahaja (RAM Buffer)**: Imej hanya dibaca sementara dalam memori komputer menggunakan fungsi `cv2.imdecode()` untuk proses pengesanan koordinat pipi dan pengiraan nilai purata RGB.
-- **Penyulitan Dalam Transit (Encryption in Transit)**: Semua komunikasi antara pelayar pengguna, pelayan Render, dan pangkalan data TiDB Cloud menggunakan protokol selamat **HTTPS** dan **TLS 1.2/1.3**.
+Free instances on Render spin down after 15 minutes of inactivity. UptimeRobot ensures continuous responsiveness:
 
----
-
-## 4. Panduan Penyelesaian Masalah (Troubleshooting)
-
-### A. Ralat Semasa Build: `libGL.so.1: cannot open shared object file`
-- **Punca**: Pakej `opencv-python` standard memerlukan pustaka GUI Linux.
-- **Penyelesaian**: Gunakan `opencv-python-headless` dalam `requirements.txt` (telah dikemaskini dalam sistem).
-
-### B. Sambungan Database Gagal / Timeout
-- Pastikan pembolehubah `BROWNSKIN_DB_PORT` ditetapkan kepada `4000` (bukan 3306).
-- Pastikan sambungan menyokong SSL (`ssl_disabled=False` telah diintegrasikan dalam modul `db_utils.py`).
-
-### C. Kamera Telefon Tidak Berfungsi
-- Akses kamera pelayar web moden memerlukan sambungan **HTTPS** yang sah. Dengan menggunakan domain Render (`https://...`), fungsi kamera boleh terus diakses dengan selamat pada pelayar Chrome dan Safari telefon pintar.
+1. Register an account at [uptimerobot.com](https://uptimerobot.com).
+2. Click **+ Add New Monitor**.
+3. Set the following monitor fields:
+   - **Monitor Type**: `HTTP(s)`
+   - **Friendly Name**: `BrownSkin Web Service`
+   - **URL (or IP)**: `https://browskin-fyp.onrender.com`
+   - **Monitoring Interval**: `Every 5 minutes`
+   - **Monitor Timeout**: `30 seconds`
+4. Click **Create Monitor**.
+5. The application remains warm in memory, eliminating cold-start latency for end users.
 
 ---
 
-*Disediakan untuk Projek Tahun Akhir (FYP) — BrownSkin Undertone Detection & Recommendation System.*
+## 3. Data Privacy and Security Standards
+
+1. **Transient In-Memory Processing**:
+   - Uploaded user facial photographs are **never stored** on physical storage drives or persisted in the database.
+   - Images are loaded into a temporary memory buffer (RAM) using `cv2.imdecode()`. Once facial color coordinates are extracted, the buffer is immediately purged.
+
+2. **Transport Layer Security (TLS)**:
+   - All client-to-server traffic is enforced over HTTPS via valid TLS certificates managed by Render.
+   - Database queries between Flask and TiDB Cloud are encrypted using SSL/TLS protocols over port 4000.
+
+3. **Secure Mobile Camera Access**:
+   - Modern mobile operating systems (iOS and Android) require a valid HTTPS connection to grant web camera permissions. Deployment on Render provides automated HTTPS compliance, enabling direct camera capture in mobile browsers.
+
+---
+
+## 4. Technical Troubleshooting Guide
+
+### Issue 1: Missing GUI Libraries During Linux Build (`libGL.so.1`)
+- **Root Cause**: The default `opencv-python` package requires X11/GUI system libraries that are omitted in headless Linux cloud containers.
+- **Resolution**: Install `opencv-python-headless` instead in `backend/requirements.txt`.
+
+### Issue 2: TiDB Connection Refused or Authentication Failure
+- Verify that `BROWNSKIN_DB_PORT` is explicitly set to `4000` rather than the default MySQL port `3306`.
+- Ensure SSL configuration (`ssl_disabled=False`) is active within `db_models.py` when communicating with `tidbcloud.com`.
+
+### Issue 3: Face Detection Failure on Submissions
+- The Haar Cascade algorithm requires an unobstructed, forward-facing view of the facial structure under balanced lighting. If facial landmarks cannot be established, the API returns a structured HTTP 422 JSON message requesting a clearer image.
+
+---
+
+## 5. Repository File Structure
+
+```text
+BrownSkin_Combined/
+|-- .gitignore
+|-- CARA-GUNA.md
+|-- DEPLOYMENT-GUIDE.md
+|-- database/
+|   |-- undertone_detection.sql
+|   `-- setup_database.py
+|-- ml_pipeline/
+|   |-- dataset/
+|   |-- test_images/
+|   |-- data/
+|   |   `-- undertone_features.csv
+|   |-- training/
+|   |   |-- train_knn.py
+|   |   |-- train_model.py
+|   |   |-- test_k_values.py
+|   |   `-- predict.py
+|   `-- utils/
+|       `-- undertone_utils.py
+|-- backend/
+|   |-- app.py
+|   |-- config.py
+|   |-- requirements.txt
+|   |-- models/
+|   |   |-- saved_models/
+|   |   |   |-- knn_model.pkl
+|   |   |   `-- scaler.pkl
+|   |   `-- db_models.py
+|   |-- controllers/
+|   |   `-- predict_controller.py
+|   |-- utils/
+|   `-- db_utils.py
+`-- website/
+    |-- pages/
+    |   |-- home.html
+    |   `-- test_upload.html
+    |-- css/
+    |   `-- style.css
+    |-- js/
+    |   `-- script.js
+    `-- images/
+        |-- banners/
+        |-- products/
+        `-- shades/
+```
