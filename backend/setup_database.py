@@ -21,9 +21,26 @@ SQL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 def load_statements(path):
     text = open(path, encoding="utf-8").read()
-    text = re.sub(r"/\*!.*?\*/;?", "", text, flags=re.S)  # buang conditional comment phpMyAdmin
+    # Buang conditional comment phpMyAdmin
+    text = re.sub(r"/\*!.*?\*/;?", "", text, flags=re.S)
+    
+    # Jadikan `id` AUTO_INCREMENT PRIMARY KEY terus dalam CREATE TABLE (keperluan wajib TiDB Cloud)
+    text = re.sub(r"`id`\s+int\(\d+\)\s+NOT\s+NULL", "`id` int(100) NOT NULL AUTO_INCREMENT PRIMARY KEY", text, flags=re.IGNORECASE)
+
     lines = [l for l in text.splitlines() if not l.lstrip().startswith("--")]
-    return [s.strip() for s in "\n".join(lines).split(";") if s.strip()]
+    stmts = [s.strip() for s in "\n".join(lines).split(";") if s.strip()]
+
+    clean_stmts = []
+    for s in stmts:
+        u = s.upper()
+        if u in ("START TRANSACTION", "COMMIT") or u.startswith(("SET SQL_MODE", "SET TIME_ZONE")):
+            continue
+        # Abaikan arahan ALTER TABLE ADD/MODIFY AUTO_INCREMENT phpMyAdmin sebab sudah dimasukkan secara inline
+        if "ADD PRIMARY KEY" in u or ("AUTO_INCREMENT" in u and u.startswith("ALTER TABLE")):
+            continue
+        clean_stmts.append(s)
+
+    return clean_stmts
 
 
 def main():
@@ -44,8 +61,6 @@ def main():
 
     n = 0
     for stmt in load_statements(SQL_FILE):
-        if stmt.upper() in ("START TRANSACTION", "COMMIT") or stmt.upper().startswith(("SET SQL_MODE", "SET TIME_ZONE")):
-            continue
         cur.execute(stmt)
         n += 1
     conn.commit()
