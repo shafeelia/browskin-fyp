@@ -1,0 +1,9 @@
+flask
+flask-cors
+opencv-python-headless==4.10.0.84
+numpy
+pandas
+scikit-learn
+joblib
+mysql-connector-python
+gunicorn

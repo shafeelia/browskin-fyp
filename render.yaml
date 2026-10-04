@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: brownskin-ai
+    env: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: BROWNSKIN_DB_HOST
+        value: gateway01.ap-southeast-1.prod.aws.tidbcloud.com
+      - key: BROWNSKIN_DB_PORT
+        value: "4000"
+      - key: BROWNSKIN_DB_USER
+        value: 2cPx11MtXzY5S1d.root
+      - key: BROWNSKIN_DB_PASSWORD
+        value: ZisDDkQiIaus8Wzy
+      - key: BROWNSKIN_DB_NAME
+        value: brownskin

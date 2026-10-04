@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrownSkin</title>
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="style.css">
+
+<!-- ===== TAMBAHAN 1: sorok Detect & Result sehingga butang ditekan ===== -->
+<style>
+    #detect, #result{
+        display:none;
+    }
+
+    body.detect-open #detect,
+    body.detect-open #result{
+        display:block;
+    }
+
+    /* link navbar Detect Skin & Result pun disorok sehingga dibuka */
+    body:not(.detect-open) .nav-link[href="#detect"],
+    body:not(.detect-open) .nav-link[href="#result"]{
+        display:none;
+    }
+</style>
+<!-- ===== TAMAT TAMBAHAN 1 ===== -->
+
+<!-- ===== TAMBAHAN 4: gaya butang produk (View Shades & Buy Now) ===== -->
+<style>
+    .product-actions{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:center;
+        gap:12px;
+        margin-top:12px;
+    }
+
+    .product-actions .btn-shade,
+    .product-actions .btn-buy{
+        font-weight:600;
+        padding:8px 26px;
+        border-radius:30px;
+        border:2px solid #672708;
+        text-decoration:none;
+        transition:.3s;
+    }
+
+    /* View Shades: kosong dengan bingkai coklat */
+    .product-actions .btn-shade{
+        background:transparent;
+        color:#672708;
+    }
+
+    .product-actions .btn-shade:hover{
+        background:#672708;
+        color:#FFFFC5;
+    }
+
+    /* Buy Now: coklat penuh */
+    .product-actions .btn-buy{
+        background:#672708;
+        color:#FFFFC5;
+    }
+
+    .product-actions .btn-buy:hover{
+        background:#8a3a14;
+        border-color:#8a3a14;
+        color:#FFFFC5;
+    }
+</style>
+<!-- ===== TAMAT TAMBAHAN 4 ===== -->
+
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#navbarNav" data-bs-root-margin="-30% 0px -60% 0px">
+
+<!--================ NAVBAR (SATU SAHAJA) =================-->
+<nav class="navbar navbar-expand-lg shadow-sm sticky-top">
+<div class="container">
+<a class="navbar-brand" href="#home">
+<img src="logo.png" class="logo">
+</a>
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+<ul class="navbar-nav">
+<li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="#detect">Detect Skin</a></li>
+<li class="nav-item"><a class="nav-link" href="#result">Result</a></li>
+</ul>
+</div>
+</div>
+</nav>
+
+<!--================ HOME =================-->
+<style>
+    .home-about h2{
+        font-size:clamp(30px, 4vw, 46px) !important;
+    }
+</style>
+<section class="home-about">
+<div class="container">
+<div class="text-center">
+<h2>
+Welcome to BrownSkin Analyzer
+</h2>
+<p>
+BrownSkin is an AI-powered web application that helps users identify their skin undertone through facial image analysis using RGB and HSV colour models.
+</p>
+</div>
+</div>
+</section>
+<div id="home">
+
+<!--================ BANNER PENUH LEBAR (untuk gambar panjang 1920 x 384) =================-->
+<style>
+    .hero-banner{
+        width:100%;
+        line-height:0;
+    }
+
+    .hero-banner img{
+        display:block;
+        width:100% !important;
+        max-width:none !important;
+        height:auto !important;
+        border-radius:0 !important;
+    }
+</style>
+
+<section class="hero-banner">
+
+<img src="baru.png" class="hero-image" alt="BrownSkin">
+
+</section>
+
+<section class="cta-section">
+<div class="container text-center">
+<h2>
+Ready to Discover Your Skin Undertone?
+</h2>
+<p>
+Start your beauty journey today with BrownSkin AI.
+</p>
+<a href="#detect"
+class="btn cta-btn">
+Try Skin Detection
+</a>
+</div>
+</section>
+
+</div>
+
+<!--================ PRODUCTS =================-->
+
+<section class="product-section">
+
+<div class="container">
+
+<h2 class="text-center mb-5">
+
+Our Products
+
+</h2>
+
+<div class="row g-4">
+
+<!-- FOUNDATION -->
+<div class="col-lg-6">
+
+<div class="product-card">
+
+<img src="foundation home.png"
+class="img-fluid">
+
+<h4>
+
+Foundation
+
+</h4>
+
+<p>
+
+Natural finish foundation specially selected according to your skin undertone.
+
+</p>
+
+<div class="product-actions">
+
+<button type="button"
+class="btn btn-shade"
+data-bs-toggle="modal"
+data-bs-target="#shadeModal"
+data-shade-img="shade_warna.png"
+data-shade-title="Shade Foundation">
+
+<i class="fa-solid fa-palette"></i>
+View Shades
+
+</button>
+
+<a href="https://vt.tiktok.com/ZS9DUUbUrXnYX-gcHDy/"
+target="_blank"
+rel="noopener"
+class="btn btn-buy">
+
+<i class="fa-solid fa-bag-shopping"></i>
+Buy Now
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- LIPSTICK -->
+<div class="col-lg-6">
+
+<div class="product-card">
+
+<img src="lipstik home.png"
+class="img-fluid">
+
+<h4>
+
+Lipstick
+
+</h4>
+
+<p>
+
+Perfect lipstick shades that complement your recommended foundation.
+
+</p>
+
+<div class="product-actions">
+
+<button type="button"
+class="btn btn-shade"
+data-bs-toggle="modal"
+data-bs-target="#shadeModal"
+data-shade-img="lipstick_warna.png"
+data-shade-title="Shade Lipstick">
+
+<i class="fa-solid fa-palette"></i>
+View Shades
+
+</button>
+
+<a href="https://vt.tiktok.com/ZS9DUUvTpkPS4-7SpaJ/"
+target="_blank"
+rel="noopener"
+class="btn btn-buy">
+
+<i class="fa-solid fa-bag-shopping"></i>
+Buy Now
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- LIP LINER -->
+<div class="col-lg-6">
+
+<div class="product-card">
+
+<img src="lipsliner.png"
+class="img-fluid">
+
+<h4>
+
+Lip Liner
+
+</h4>
+
+<p>
+
+Perfect lip liner shades that define and enhance your natural lip shape.
+
+</p>
+
+<div class="product-actions">
+
+<button type="button"
+class="btn btn-shade"
+data-bs-toggle="modal"
+data-bs-target="#shadeModal"
+data-shade-img="lipliner_warna.png"
+data-shade-title="Shade Lip Liner">
+
+<i class="fa-solid fa-palette"></i>
+View Shades
+
+</button>
+
+<a href="https://vt.tiktok.com/ZS9DUUKekLkq4-FE4Qb/"
+target="_blank"
+rel="noopener"
+class="btn btn-buy">
+
+<i class="fa-solid fa-bag-shopping"></i>
+Buy Now
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- BLUSHER -->
+<div class="col-lg-6">
+
+<div class="product-card">
+
+<img src="blusher.png"
+class="img-fluid">
+
+<h4>
+
+Blusher
+
+</h4>
+
+<p>
+
+Natural blusher shades that bring a healthy and radiant touch to your cheeks.
+
+</p>
+
+<div class="product-actions">
+
+<button type="button"
+class="btn btn-shade"
+data-bs-toggle="modal"
+data-bs-target="#shadeModal"
+data-shade-img="blusher_warna.png"
+data-shade-title="Shade Blusher">
+
+<i class="fa-solid fa-palette"></i>
+View Shades
+
+</button>
+
+<a href="https://vt.tiktok.com/ZS9DUyevnd6xr-3UVNS/"
+target="_blank"
+rel="noopener"
+class="btn btn-buy">
+
+<i class="fa-solid fa-bag-shopping"></i>
+Buy Now
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- TOTE BAG -->
+<div class="col-lg-6">
+
+<div class="product-card">
+
+<img src="beg.png"
+class="img-fluid">
+
+<h4>
+
+Tote Bag
+
+</h4>
+
+<p>
+
+Elegant tote bag designed to complement your beauty essentials.
+
+</p>
+
+<div class="product-actions">
+
+<a href="https://vt.tiktok.com/ZS9DUyYGn1HBF-RzCYj/"
+target="_blank"
+rel="noopener"
+class="btn btn-buy">
+
+<i class="fa-solid fa-bag-shopping"></i>
+Buy Now
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- MASCARA -->
+<div class="col-lg-6">
+
+<div class="product-card">
+
+<img src="maskara.png"
+class="img-fluid">
+
+<h4>
+
+Mascara
+
+</h4>
+
+<p>
+
+Long-lasting mascara that adds volume and length for beautifully defined lashes.
+
+</p>
+
+<div class="product-actions">
+
+<a href="https://www.tiktok.com/@brownskinhq?_r=1&_t=ZS-9AGuVQA8TFV"
+target="_blank"
+rel="noopener"
+class="btn btn-buy">
+
+<i class="fa-solid fa-bag-shopping"></i>
+Buy Now
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!--================ POP-UP SHADE (DIKONGSI SEMUA PRODUK) =================-->
+<div class="modal fade" id="shadeModal" tabindex="-1" aria-hidden="true">
+
+<div class="modal-dialog modal-dialog-centered modal-xl">
+
+<div class="modal-content" style="background:#FFFFC5; border-radius:20px; border:none;">
+
+<div class="modal-header" style="border-bottom:none;">
+
+<h5 class="modal-title" id="shadeModalTitle" style="color:#672708; font-weight:700;">
+
+Shade
+
+</h5>
+
+<button type="button"
+class="btn-close"
+data-bs-dismiss="modal"
+aria-label="Close"></button>
+
+</div>
+
+<div class="modal-body text-center" style="padding-top:0;">
+
+<img id="shadeModalImg"
+src=""
+class="img-fluid"
+style="border-radius:15px;"
+alt="Shade">
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!--================ SECURITY =================-->
+
+<section class="security-section">
+<div class="container">
+<div class="security-box">
+<i class="fa-solid fa-shield-halved"></i>
+
+<p>
+
+Want more makeup recommendations? Visit BrownSkin TikTok for beauty tips, tutorials, and the latest shade inspirations.
+
+</p>
+
+<a href="https://www.tiktok.com/@brownskinhq?_r=1&_t=ZS-9ABLugnwyAu"
+target="_blank"
+class="btn"
+style="background:#672708; color:#FFFFC5; font-weight:600; padding:10px 30px; border-radius:30px;">
+
+Visit Our TikTok
+
+</a>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="why-section">
+<div class="container">
+<h2 class="text-center mb-5">
+Why Choose BrownSkin?
+</h2>
+<div class="row g-4">
+<div class="col-lg-4">
+<div class="why-card">
+<i class="fa-solid fa-brain"></i>
+<h4>
+AI Technology
+</h4>
+<p>
+Detect skin undertone accurately using AI with RGB and HSV colour analysis.
+</p>
+</div>
+</div>
+<div class="col-lg-4">
+<div class="why-card">
+<i class="fa-solid fa-palette"></i>
+<h4>
+Perfect Shade
+</h4>
+<p>
+Recommend the most suitable foundation and lipstick based on your skin undertone.
+</p>
+</div>
+</div>
+<div class="col-lg-4">
+<div class="why-card">
+<i class="fa-solid fa-face-smile"></i>
+<h4>
+Easy To Use
+</h4>
+<p>
+Upload your image, analyze your undertone and receive your beauty recommendation instantly.
+</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!--================ DETECT SKIN =================-->
+<div id="detect">
+
+<section class="detect-hero">
+<div class="container text-center">
+<h1>
+Detect Your Skin Undertone
+</h1>
+<p>
+Upload your facial image and let AI detect your skin undertone accurately.
+</p>
+</div>
+</section>
+
+<!--================ HOW IT WORKS (dialih ke sini) =================-->
+<section class="work-section">
+<div class="container">
+<h2 class="text-center mb-5">
+How It Works
+</h2>
+<div class="row text-center">
+<div class="col-lg-3">
+<div class="step-box">
+<h1>1</h1>
+<h5>Upload</h5>
+<p>
+Upload your facial image.
+</p>
+</div>
+</div>
+<div class="col-lg-3">
+<div class="step-box">
+<h1>2</h1>
+<h5>Analyze</h5>
+<p>
+AI analyzes your skin colour.
+</p>
+</div>
+</div>
+<div class="col-lg-3">
+<div class="step-box">
+<h1>3</h1>
+<h5>Detect</h5>
+<p>
+Identify your skin undertone.
+</p>
+</div>
+</div>
+<div class="col-lg-3">
+<div class="step-box">
+<h1>4</h1>
+<h5>Recommend</h5>
+<p>
+Get suitable foundation & lipstick.
+</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="detect-section">
+<div class="container">
+<div class="row g-5">
+
+<!-- Upload -->
+<div class="col-lg-6">
+<div class="upload-card">
+<h3>
+    <i class="fa-solid fa-camera"></i>
+    Capture Your Face
+</h3>
+<div class="upload-box">
+    <input
+        type="file"
+        id="imageInput"
+        accept="image/*"
+        capture="user"
+        hidden>
+    <button
+        type="button"
+        class="btn choose-btn"
+        onclick="document.getElementById('imageInput').click();">
+        <i class="fa-solid fa-camera"></i>
+        Open Front Camera
+    </button>
+</div>
+
+<!-- BUTANG ANALYZE (dah dinaikkan ke sini) -->
+<div class="text-center analyze-wrap">
+<button class="btn analyze-btn">
+    <i class="fa-solid fa-wand-magic-sparkles"></i>
+    Analyze Skin
+</button>
+</div>
+
+</div>
+</div>
+
+<!-- Preview -->
+<div class="col-lg-6">
+<div class="preview-card">
+<h3>
+<i class="fa-solid fa-eye"></i>
+Preview
+</h3>
+<div class="preview-box">
+<img
+id="previewImage"
+src="preview.png"
+class="img-fluid preview-img">
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section class="security-section">
+<div class="container">
+<div class="security-box">
+<i class="fa-solid fa-shield-halved"></i>
+<p>
+Your uploaded image is used only for skin undertone analysis.
+It will not be stored or shared.
+</p>
+</div>
+</div>
+</section>
+
+<section class="tips-section">
+<div class="container">
+<h2 class="text-center mb-5">
+Tips Before Detection
+</h2>
+<div class="row g-4">
+<div class="col-lg-3 col-md-6">
+<div class="tips-card">
+<i class="fa-solid fa-sun"></i>
+<h4>
+Natural Light
+</h4>
+<p>
+Look straight at the camera.
+</p>
+</div>
+</div>
+<div class="col-lg-3 col-md-6">
+<div class="tips-card">
+<i class="fa-solid fa-face-smile"></i>
+<h4>
+No Makeup
+</h4>
+<p>
+Avoid filters and editing.
+</p>
+</div>
+</div>
+<div class="col-lg-3 col-md-6">
+<div class="tips-card">
+<i class="fa-solid fa-camera"></i>
+<h4>
+Face Camera
+</h4>
+<p>
+Face the camera directly.
+</p>
+</div>
+</div>
+<div class="col-lg-3 col-md-6">
+<div class="tips-card">
+<i class="fa-solid fa-sliders"></i>
+<h4>
+No Filter
+</h4>
+<p>
+Use your natural appearance.
+</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+</div>
+
+<!--================ RESULT =================-->
+<div id="result">
+
+<section class="result-section">
+<div class="container">
+
+<h1 class="text-center mb-5">
+Your Skin Analysis Result
+</h1>
+
+<div class="row">
+
+<!-- USER IMAGE -->
+<div class="col-lg-4 mb-4">
+    <div class="result-card text-center">
+        <img id="uploadedImage"
+             src="preview.png"
+             class="img-fluid result-img">
+        <h5 class="mt-3">
+            Uploaded Image
+        </h5>
+    </div>
+</div>
+
+<!-- RESULT DETAILS -->
+<div class="col-lg-8">
+<div class="result-card">
+
+<h3>
+Detected Undertone
+</h3>
+
+<div class="undertone-badge" id="undertoneBadge">
+Tiada Result
+</div>
+
+<p id="undertoneDesc">
+Sila pergi ke bahagian <a href="#detect">Detect Skin</a> dan muat naik gambar dahulu.
+</p>
+
+<hr>
+
+<h3>
+Recommended Foundation
+</h3>
+
+<div class="product-box">
+<img id="foundationImg" src="foundation brownskin.png"
+class="product-img">
+<div>
+<h5 id="foundationShade">-</h5>
+<p id="foundationSkintone">
+-
+</p>
+</div>
+</div>
+
+<hr>
+
+<h3>
+Recommended Lipstick
+</h3>
+
+<div class="product-box">
+<img id="lipstickImg" src="lipstik home.png"
+class="product-img">
+<div>
+<h5 id="lipstickShade">-</h5>
+<p id="lipstickSkintone">
+-
+</p>
+</div>
+</div>
+
+<a href="#detect"
+class="btn try-btn mt-4">
+Analyze Again
+</a>
+
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+</div>
+
+<!--================ FOOTER =================-->
+<footer>
+<div class="container">
+<div class="row">
+
+<div class="col-lg-4">
+<h3>
+BrownSkin
+</h3>
+<p>
+AI-powered skin undertone detection and beauty recommendation system.
+</p>
+</div>
+
+<div class="col-lg-4">
+<h4>
+Quick Links
+</h4>
+<ul>
+<li><a href="#home">Home</a></li>
+<li><a href="#detect">Detect Skin</a></li>
+<li><a href="#result">Result</a></li>
+</ul>
+</div>
+
+<div class="col-lg-4">
+<h4>
+Contact Us
+</h4>
+<p>
+<i class="fa-solid fa-envelope"></i>
+brownskin@gmail.com
+</p>
+<p>
+<i class="fa-solid fa-phone"></i>
++60 13-7826731
+</p>
+<p>
+<i class="fa-solid fa-location-dot"></i>
+Malaysia
+</p>
+</div>
+
+</div>
+
+<hr>
+
+<p class="copyright">
+© 2026 BrownSkin. All Rights Reserved.
+</p>
+
+</div>
+</footer>
+
+<script src="script.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ===== TAMBAHAN 2: buka Detect & Result bila user tekan butang ===== -->
+<script>
+document.querySelectorAll('a[href="#detect"], a[href="#result"]').forEach(function(link){
+
+    link.addEventListener("click", function(e){
+
+        e.preventDefault();
+
+        document.body.classList.add("detect-open");
+
+        var target = document.querySelector(this.getAttribute("href"));
+
+        if(target){
+            target.scrollIntoView({behavior:"smooth"});
+        }
+
+    });
+
+});
+</script>
+<!-- ===== TAMAT TAMBAHAN 2 ===== -->
+
+<!-- ===== TAMBAHAN 3: pop-up gambar shade ===== -->
+<script>
+document.getElementById("shadeModal").addEventListener("show.bs.modal", function(e){
+
+    var btn = e.relatedTarget;
+
+    document.getElementById("shadeModalImg").src = btn.getAttribute("data-shade-img");
+    document.getElementById("shadeModalTitle").textContent = btn.getAttribute("data-shade-title");
+
+});
+</script>
+<!-- ===== TAMAT TAMBAHAN 3 ===== -->
+
+</body>
+</html>
